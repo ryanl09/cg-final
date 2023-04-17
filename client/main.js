@@ -1,72 +1,15 @@
 const V_SHADER = `
 attribute vec3 a_Position;
-    attribute vec3 a_Normal;
-    uniform mat4 u_VP;
-    uniform float u_Time;
-    uniform int u_Mode;
 
+uniform mat4 u_PVM;         // model-view-projection matrix
+uniform vec3 u_Color;
 
-    varying vec4 v_Color;
+varying vec4 v_Color;
 
-    void main() {
-        float time = u_Time;
-        const float speedA = 0.2 * (2.0 * 3.1415);
-        const float speedB = 0.1 * (2.0 * 3.1415);
-
-        float a = speedA * time;
-        float b = speedB * time;
-        // a = 0.5;
-        // b = 0.8;
-        float sinA = sin(a);
-        float cosA = cos(a);
-        mat4 T1 = mat4(
-           1.0,   0.0, 0.0,   0.0,
-           0.0,   1.0, 0.0,   0.0,
-           0.0,   0.0, 1.0,  0.0,
-           0.0,   0.0, 0.0,   1.0      
-        );
-        mat4 R2 = mat4(
-           cos(b),   0.0, sin(b), 0.0,
-              0.0,   1.0, 0.0,    0.0,
-          -sin(b),   0.0, cos(b), 0.0,
-              0.0,   0.0, 0.0,    1.0
-        );
-        mat4 R1 = mat4(
-           cosA, sinA, 0.0, 0.0,
-          -sinA, cosA, 0.0, 0.0,
-            0.0,  0.0, 1.0, 0.0,
-            0.0,  0.0, 0.0, 1.0
-        );
-        mat4 MV = mat4(
-          1.0, 0, 0,     0,
-          0, 1.0, 0,     0,
-          0, 0, 1.0,     0,
-          -0.5, -0.5, -0.5, 1
-        );
-
-        gl_Position = u_VP*T1*R2*R1*MV*vec4(a_Position.xyz, 1.0);
-        // gl_Position = u_VP*vec4(a_Position.xyz, 1.0);
-        // gl_Position = R1*MV*vec4(a_Position.xyz, 1.0);
-
-
-        vec3 normal = normalize(a_Normal);
-        normal = (R2*R1*MV*vec4(normal, 1.0)).xyz;
-        vec3 light = normalize(vec3(1.0, 0.0, 1.0));
-        float angle = acos(abs(dot(normal, light)));
-        float diff = 1.0 - (angle / 3.1415);
-
-        vec3 color = vec3(0.0, 0.5, 1.0);
-
-        diff = 0.0;
-
-        if (u_Mode == 0) {
-          float ambient = 0.2;
-          color = (ambient) * color + (diff) * color; 
-          v_Color = vec4(color, 1.0);
-        } else {
-          v_Color = vec4(color, 1.0);
-        }
-    }
+void main() {
+    gl_Position = u_PVM*vec4(a_Position, 1.0);
+    v_Color = vec4(u_Color, 1.0);
+}
 
 `;
 
