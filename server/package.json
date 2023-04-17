@@ -1,0 +1,14 @@
+{
+  "name": "webglserver",
+  "version": "1.0.0",
+  "description": "A simple static server for WebGL projects with assets.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Stephan Ohl",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
