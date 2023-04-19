@@ -12,7 +12,7 @@ const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 const gl = canvas.getContext('webgl') as WebGLRenderingContext;
 
 const track = 'track';
-//const blendTime = 300;
+const blendTime = 300;
 let lastFrame = 0;
 
 const cam = {
@@ -60,6 +60,21 @@ const render = (uniforms: DefaultShader, models: gltf.Model[]) => {
 
 
     models.forEach(model => {
+        const animation = gltf.getActiveAnimations('default', model.name);
+
+        if (animation) {
+            const animationTransforms = gltf.getAnimationTransforms(model, animation, blendTime);
+
+            console.log('j');
+            gltf.applyToSkin(model, animationTransforms).forEach((x, i) => {
+                gl.uniformMatrix4fv(uniforms.jointTransform[i], false, x);
+            });
+
+            gl.uniform1i(uniforms.isAnimated, 0); //1
+        } else {
+            gl.uniform1i(uniforms.isAnimated, 0);
+        }
+
         model.nodes.forEach((e, index) => {
             if(index !== 0 && index !== 3 && index !== 4){
                 renderModel(gl, model, e.id, model.nodes[e.id].localBindTransform, uniforms);
