@@ -28,6 +28,11 @@ const renderModel = (gl: WebGLRenderingContext, model: Model, node: number, tran
         const material = model.materials[mesh.material];
 
         if (material) {
+            if (node === 1){
+                material.baseColorFactor[2] = .06;
+            } else {
+                material.baseColorFactor[2] = .6;
+            }
             applyTexture(gl, material.baseColorTexture, 0, uniforms.baseColorTexture, uniforms.hasBaseColorTexture);
             applyTexture(gl, material.metallicRoughnessTexture, 1, uniforms.metallicRoughnessTexture, uniforms.hasMetallicRoughnessTexture);
             applyTexture(gl, material.emissiveTexture, 2, uniforms.emissiveTexture, uniforms.hasEmissiveTexture);
