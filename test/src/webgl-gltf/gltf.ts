@@ -28,10 +28,10 @@ export enum BufferType {
     Short = 5123,
 }
 
-const getBuffer = async (path: string, buffer: string) => {
-    const dir = path.split('/').slice(0, -1).join('/');
-    const response = await fetch(`${dir}/${buffer}`);
-    return await response.arrayBuffer();
+const getBuffer = async (buffer: string) => {
+    const response = await fetch(buffer);
+    const blob = await response.blob();
+    return await blob.arrayBuffer();
 };
 
 const getTexture = async (gl: GLContext, uri: string) => {
@@ -103,8 +103,8 @@ const getBufferFromName = (gl: GLContext, gltf: gltf.GlTf, buffers: ArrayBuffer[
 const loadNodes = (index: number, node: gltf.Node): Node => {
     const transform = mat4.create();
 
-    if (node.translation !== undefined) mat4.translate(transform, transform, vec3.fromValues(node.translation[0], node.translation[1], node.translation[1]));
     if (node.rotation !== undefined) applyRotationFromQuat(transform, node.rotation);
+    if (node.translation !== undefined) mat4.translate(transform, transform, vec3.fromValues(node.translation[0]+.25, node.translation[1] -.02, node.translation[2]));
     if (node.scale !== undefined) mat4.scale(transform, transform, vec3.fromValues(node.scale[0], node.scale[1], node.scale[1]));
     if (node.matrix !== undefined) createMat4FromArray(node.matrix);
 
@@ -283,7 +283,7 @@ const loadModel = async (gl: GLContext, uri: string) => {
     }
 
     const buffers = await Promise.all(
-        gltf.buffers!.map(async (b) => await getBuffer(uri, b.uri!)
+        gltf.buffers!.map(async (b) => await getBuffer(b.uri!)
     ));
 
     const scene = gltf.scenes![gltf.scene || 0];

@@ -1,0 +1,12 @@
+h1 {
+    font-size: 14pt;
+    font-family: sans-serif;
+    display: block;
+    text-align: center;
+}
+
+.webgl {
+    margin : auto;
+    display: block;
+}
+

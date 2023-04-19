@@ -56,10 +56,6 @@ const renderModel = (gl: WebGLRenderingContext, model: Model, node: number, tran
             gl.drawArrays(gl.TRIANGLES, 0, mesh.elementCount);
         }
     }
-
-    model.nodes[node].children.forEach(c => {
-        renderModel(gl, model, c, transform, uniforms);
-    });
 };
 
 export {

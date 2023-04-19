@@ -12,7 +12,7 @@ const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 const gl = canvas.getContext('webgl') as WebGLRenderingContext;
 
 const track = 'track';
-const blendTime = 300;
+//const blendTime = 300;
 let lastFrame = 0;
 
 const cam = {
@@ -57,21 +57,14 @@ const render = (uniforms: DefaultShader, models: gltf.Model[]) => {
     gl.uniformMatrix4fv(uniforms.pMatrix, false, cameraMatrix.pMatrix);
     gl.uniformMatrix4fv(uniforms.vMatrix, false, cameraMatrix.vMatrix);
 
+
+
     models.forEach(model => {
-        const animation = gltf.getActiveAnimations('default', model.name);
-
-        if (animation) {
-            const animationTransforms = gltf.getAnimationTransforms(model, animation, blendTime);
-            gltf.applyToSkin(model, animationTransforms).forEach((x, i) => {
-                gl.uniformMatrix4fv(uniforms.jointTransform[i], false, x);
-            });
-
-            gl.uniform1i(uniforms.isAnimated, 1);
-        } else {
-            gl.uniform1i(uniforms.isAnimated, 0);
-        }
-
-        renderModel(gl, model, model.rootNode, model.nodes[model.rootNode].localBindTransform, uniforms);
+        model.nodes.forEach((e, index) => {
+            if(index !== 0 && index !== 3 && index !== 4){
+                renderModel(gl, model, e.id, model.nodes[e.id].localBindTransform, uniforms);
+            }
+        });
     });
 
     gltf.advanceAnimation(performance.now() - lastFrame);
@@ -122,3 +115,12 @@ const zoom = (delta: number) => {
 
 inputs.listen(canvas, rotate, zoom);
 startup();
+
+
+
+setInterval(() => {
+    rotate({
+        x: -.04,
+        y: 0
+    });
+}, 5);
