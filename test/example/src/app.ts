@@ -91,7 +91,7 @@ const render = (uniforms: DefaultShader, models: gltf.Model[]) => {
 };
 
 const startup = async () => {
-    gl.clearColor(0.3, 0.3, 0.3, 1);
+    gl.clearColor(0.15, 0.15, 0.15, 1);
     gl.enable(gl.DEPTH_TEST);
 
     window.onresize = () => { setSize(); };
@@ -135,7 +135,7 @@ startup();
 
 setInterval(() => {
     rotate({
-        x: -.04,
+        x: -.005,
         y: 0
     });
 }, 5);
