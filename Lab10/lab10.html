@@ -5,6 +5,9 @@
     <title> WebGL - Lab10 </title>
     <link href="css/labs.css" rel="stylesheet">
 
+    <script type="text/javascript">
+    </script>
+
     <!-- import map -->
     <script type="importmap">
       {
@@ -24,9 +27,47 @@
     <script defer src="../lib/cuon-utils.js"> </script>
     <script defer type="module" src="js/lab10.js"> </script>
 
+    <style>
+      *{
+        box-sizing:border-box;
+      }
+      .button-container {
+        position:fixed;
+        bottom:0;
+        width:100%;
+        left:0;
+        padding:40px;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        gap:10px;
+      }
+
+      button {
+        border:none;
+        outline:none;
+        color:white;
+        background-color:#454545;
+        padding: 8px 40px;
+        transition:.23s all ease;
+        font-weight:500;
+        font-size:16px;
+      }
+
+      button:hover{
+        background-color:#373737;
+        cursor:pointer;
+      }
+    </style>
+
   </head>
   <body onload="main()">
-    <h1> GLTF Loading  </h1>
-    <canvas class="webgl" id="canvas_gl" width="640" height="360"> </canvas>
+    <canvas class="webgl" id="canvas_gl"> </canvas>
+
+
+    <div class="button-container">
+      <button id="a-oc">Open / Close</button>
+      <button id="a-d">Detach</button>
+    </div>
   </body>
 </html>

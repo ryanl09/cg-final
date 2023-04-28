@@ -1,6 +1,7 @@
 attribute vec3 a_Position;
 
 uniform mat4 u_PVM;         // model-view-projection matrix
+
 uniform vec3 u_Color;
 
 varying vec4 v_Color;

@@ -25,24 +25,28 @@ uniform Shadowmap u_Shadowmaps[2];
 
 in vec3 a_Position;             // vertex position
 in vec3 a_Normal;               // vertex normal
+in vec2 a_TexCoord;
 
-uniform mat4 u_VM;              // model-view matrix
+uniform mat4 u_V;              // view matrix
 uniform mat4 u_P;               // projection matrix
 uniform mat4 u_PVM;             // model-view-projection matrix
+uniform mat4 u_M;               //model matrix
 uniform mat3 u_N;               // normal matrix: inverse transpose of 3x3 affine part
 uniform float u_Time;
 uniform int u_Mode;
 
+out vec2 v_texCoord;
 out vec3 smooth_point_camera;   // surface point in camera coordinates
 out vec3 smooth_point_world;    // surface point in world coordinates
 out vec3 smooth_normal;         // surface normal in camera coordinates
+
 
 void main() {
 
     // transform vertex
     vec4 point_model = vec4(a_Position.xyz, 1.0);               // homogenize point coordinates
-    vec4 point_camera = u_VM * point_model;                     // vertex in camera frame
-    vec4 point_screen = u_P * point_camera;                     // vertex in normalized camera space
+    vec4 point_camera = u_V * point_model;                     // vertex in camera frame
+    vec4 point_screen = u_PVM * u_M * point_model ;                     // vertex in normalized camera space
 
     gl_Position = point_screen;
 
@@ -54,5 +58,7 @@ void main() {
     smooth_normal = normal;                                     // interpolate normals in fragment shader
 
     smooth_point_world = a_Position.xyz;
+    v_texCoord = a_TexCoord;
+
 
 }

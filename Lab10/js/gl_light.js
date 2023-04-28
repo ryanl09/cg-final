@@ -46,7 +46,7 @@ export class Shadowmap {
     constructor(width, height) {
         this.width = width;
         this.height = height;
-        this.mat4_VM = m.mat4_new_identity();
+        this.mat4_V = m.mat4_new_identity();
         this.mat4_P = m.mat4_new_identity();
         this.mat4_PVM = m.mat4_new_identity();
     }

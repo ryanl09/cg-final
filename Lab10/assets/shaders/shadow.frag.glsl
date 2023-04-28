@@ -31,6 +31,16 @@ smooth in vec3 smooth_point_camera;     // point in camera frame
 smooth in vec3 smooth_point_world;      // point in world frame
 smooth in vec3 smooth_normal;           // normal in camera frame
 
+
+uniform int u_hasBaseColorTexture;
+uniform sampler2D u_baseColorTexture;
+uniform vec4 u_baseColorFactor;
+
+in vec2 v_texCoord;
+
+vec4 getBaseColor();
+vec4 srgbToLinear(vec4 srgbIn);
+
 out vec4 FragColor;
 
 void main() {
@@ -75,7 +85,7 @@ void main() {
 
     vec3 I_ambient = vec3(1.0, 1.0, 1.0);                       // ambient light intensity
     vec3 I_light0 = vec3(1.0, 1.0, 1.0);                        // point light intensity
-    vec3 k_ambient = 0.3 * vec3(0.5, 0.7, 1.0);
+    vec3 k_ambient = 0.3 * vec3(0.1, 0.1, .1);
     vec3 k_diffuse = 0.5 * vec3(0.5, 0.7, 1.0);
     vec3 k_specular = 0.2 * vec3(1.0);
     float shiny = 10.0;
@@ -85,11 +95,27 @@ void main() {
     k_specular *= is_illuminated;
 
     // integrate surface point color
-    vec3 color = vec3(0.0, 0.0, 0.0);
+    vec4 bcolor = getBaseColor();
+    vec3 color = bcolor.rgb * vec3(1.0);
     color += k_ambient * I_ambient;                             // ambient reflection
     color += k_diffuse * n_dot_l * I_light0;                    // diffuse reflection
     color += k_specular * pow(r_dot_v, shiny) * I_light0;       // specular reflection
 
+
     FragColor = vec4(color, 1.0);
 //    FragColor = vec4(tex_color.xyz * float(in_clip), 1.0);
+}
+
+
+vec4 srgbToLinear(vec4 srgbIn) {
+    return vec4(pow(srgbIn.xyz, vec3(2.2)), srgbIn.w);
+}
+
+vec4 getBaseColor() {
+    if (u_hasBaseColorTexture == 1) {
+        vec2 v2 = vec2(v_texCoord.y, 1.0-v_texCoord.x);
+        return texture(u_baseColorTexture, v2);
+        //return srgbToLinear(texture(u_baseColorTexture, v2)) * u_baseColorFactor;
+    }
+    return u_baseColorFactor;
 }

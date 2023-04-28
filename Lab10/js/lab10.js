@@ -4,6 +4,15 @@ import { default as createIlluminationScene } from "scene_illumination";
 let context = { };
 let scene = { };
 
+let animation = 0;
+
+
+
+window.addEventListener('load', function(){
+    const b1 = document.getElementById('a-oc');
+    const b2 = document.getElementById('a-d');
+});
+
 function initRender3D(context) {
     let ctx = context;
 
@@ -20,10 +29,12 @@ function initRender3D(context) {
       return;
     }
 
-    console.log(`[info] ${gl.getParameter(gl.VERSION)}`);
-    console.log(`[info] ${gl.getParameter(gl.SHADING_LANGUAGE_VERSION)}`);
 
-    // setup WebGL 
+    setSize(gl, canvas);
+    window.addEventListener('resize', function() {
+        setSize(gl, canvas);
+    });
+
     gl.frontFace(gl.CCW);  // standard: GL_CCW
     gl.cullFace(gl.BACK);  // standard: GL_BACK
     gl.enable(gl.CULL_FACE);
@@ -41,10 +52,14 @@ function initRender3D(context) {
     context.viewer_distance_down = context.viewer_distance;
 
     // create view and projection matrices
-    context.mat4_VM = m.mat4_new_identity();    // model-view matrix
+    context.mat4_V = m.mat4_new_identity();    // model-view matrix
     context.mat4_P = m.mat4_new_identity();     // projection matrix
     context.mat4_PVM = m.mat4_new_identity();   // model-view-projection matrix
     context.mat3_N = m.mat3_new_identity();     // normal matrix: inverse transpose of 3x3 affine part
+
+    context.rot = m.mat4_new_identity();
+
+    context.counter = 0;
     
 }
 
@@ -54,7 +69,6 @@ function initScene(context, scene) {
 
     // compile all shaders that are attached to scene
     for (const [name, program] of Object.entries(scene.programs)) {
-        console.log("[info] compile program '" + name + "'");
         program.id = createProgram(gl, 
             program.vertex_shader.source, 
             program.fragment_shader.source);
@@ -69,7 +83,6 @@ function initScene(context, scene) {
         for (let j=0; j<n_attribs; ++j) {
             let info = gl.getActiveAttrib(program.id, j);
             let loc = gl.getAttribLocation(program.id, info.name);
-            console.log("  found attribute '" + info.name + "'");
             program.attributes[info.name] = loc;
         }
 
@@ -78,33 +91,30 @@ function initScene(context, scene) {
         for (let j=0; j<n_uniforms; ++j) {
             let info = gl.getActiveUniform(program.id, j);
             let loc = gl.getUniformLocation(program.id, info.name);
-            console.log("  found uniform '" + info.name + "'");
             program.uniforms[info.name] = loc;
         }
     }
 
     // create WebGL buffers for all geometries
-    for (const [name, geometry] of Object.entries(scene.geometries)) {
-        console.log("[info] creating buffers for geometry '" + name 
-            + "' with " + geometry.primitives + " primitives");
-
-        // create attribute buffers
-        for (const [attribute_name, buffer] of Object.entries(geometry.buffers)) {
-            console.log("  buffer for attribute '" + attribute_name + "'");
-            let buffer_gl = gl.createBuffer();
-            geometry.buffers_gl[attribute_name] = buffer_gl;
-            gl.bindBuffer(gl.ARRAY_BUFFER, buffer_gl);
-            gl.bufferData(gl.ARRAY_BUFFER, buffer, gl.STATIC_DRAW);
-        }
-
-        // create index (element) buffer
-        if (geometry.elements) {
-            console.log("  buffer for elements");
-            let elements_gl = gl.createBuffer();
-            geometry.elements_gl = elements_gl;
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elements_gl);
-            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, geometry.elements, gl.STATIC_DRAW);
-        }
+    const sg = Object.entries(scene.geometries);
+    for (const [name, geometry] of sg) {
+        geometry.geometries.forEach(g => {
+            const buffers = Object.entries(g.buffers);
+            for (const [attribute_name, buffer] of buffers) {
+                let buffer_gl = gl.createBuffer();
+                g.buffers_gl[attribute_name] = buffer_gl;
+                gl.bindBuffer(gl.ARRAY_BUFFER, buffer_gl);
+                gl.bufferData(gl.ARRAY_BUFFER, buffer, gl.STATIC_DRAW);
+            }
+    
+            // create index (element) buffer
+            if (g.elements) {
+                let elements_gl = gl.createBuffer();
+                g.elements_gl = elements_gl;
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elements_gl);
+                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, g.elements, gl.STATIC_DRAW);
+            }
+        });
     }
 
     // attach render functions to shader programs
@@ -225,6 +235,7 @@ function initMouseHandler(context) {
 async function init(context) {
   initRender3D(context);
   scene = await createIlluminationScene(context.gl);
+  console.log(scene.geometries.screen);
   initScene(context, scene);
   initShadowMapping(context, scene);
   initMouseHandler(context);
@@ -258,6 +269,8 @@ function transformClient2WebGL(canvas, mouse) {
 function update(context, timestamp) {
     let ctx = context;    // shortcut alias
     let gl = context.gl;  // shortcut alias
+
+    console.log()
 
     // lazy initialization
     if (!ctx.timestamp_last) {
@@ -315,14 +328,14 @@ function update(context, timestamp) {
     // update viewer camera
     let aspect = context.canvas.aspect;
 
-    m.mat4_set_lookat(ctx.mat4_VM, eye, center, up);
+    m.mat4_set_lookat(ctx.mat4_V, eye, center, up);
     m.mat4_set_perspective(ctx.mat4_P, 1.5, aspect, 0.1, 100.0);
 
     // mat4_set_orthogonal(ctx.mat4_P, -10, 10, -10, 10, 100, -100);
     // mat4_set_identity(ctx.mat4_P);
 
-    m.mat4_mul_mat4(ctx.mat4_PVM, ctx.mat4_P, ctx.mat4_VM);
-    m.mat4_get_topleft_mat3(ctx.mat4_VM, ctx.mat3_N); // we just do euclidian
+    m.mat4_mul_mat4(ctx.mat4_PVM, ctx.mat4_P, ctx.mat4_V);
+    m.mat4_get_topleft_mat3(ctx.mat4_V, ctx.mat3_N); // we just do euclidian
 
 
     // update rotating light
@@ -345,7 +358,7 @@ function update(context, timestamp) {
     m.mat4_mul_vec4(spot0.vec4_position, spot0.mat4_Rt, spot0.vec4_init);
 
     //   spot0 position in camera frame (viewer position frame)
-    m.mat4_mul_vec4(spot0.vec4_position_camera, ctx.mat4_VM, spot0.vec4_position);
+    m.mat4_mul_vec4(spot0.vec4_position_camera, ctx.mat4_V, spot0.vec4_position);
 
     //   spot0 direction update
     m.vec3_cpy_from_vec4(spot0.vec3_position, spot0.vec4_position);
@@ -354,23 +367,20 @@ function update(context, timestamp) {
     // update model-view-projection matrices for light
     //   parameters set_lookat(): eye, center, up
     //   parameters set_perspective(): fov (in radians), aspect, near, far
-    m.mat4_set_lookat(spot0.shadowmap.mat4_VM, spot0.vec3_position, spot0.vec3_center, spot0.vec3_up);
+    m.mat4_set_lookat(spot0.shadowmap.mat4_V, spot0.vec3_position, spot0.vec3_center, spot0.vec3_up);
     m.mat4_set_perspective(spot0.shadowmap.mat4_P, 0.5*Math.PI, 1.0, 0.1, 100.0);
-    m.mat4_mul_mat4(spot0.shadowmap.mat4_PVM, spot0.shadowmap.mat4_P, spot0.shadowmap.mat4_VM);
+    m.mat4_mul_mat4(spot0.shadowmap.mat4_PVM, spot0.shadowmap.mat4_P, spot0.shadowmap.mat4_V);
 }
 
 
-function renderGeometrySimpleProgram(gl, program, geometry) {
-
+function renderGeometrySimpleProgram(gl, program, geometry, name) {
     let buf_gl = geometry.buffers_gl["a_Position"];
     let buf = geometry.buffers["a_Position"];
-
     gl.useProgram(program.id);
     gl.bindBuffer(gl.ARRAY_BUFFER, buf_gl);
     gl.vertexAttribPointer(program.attributes.a_Position, 3, gl.FLOAT, false, 0 , 0);
-    gl.uniform3f(program.uniforms.u_Color, 0.9, 0.9, 0.9);
+    gl.uniform3f(program.uniforms.u_Color, 0.3, 0.3, 0.3);
     gl.uniformMatrix4fv(program.uniforms.u_PVM, true, context.mat4_PVM);
-
     gl.drawArrays(geometry.primitives_type, 0, geometry.elements_count);
 }
 
@@ -400,7 +410,7 @@ function renderGeometryTextureProgram(gl, program, geometry) {
     // set uniforms (uniforms are same for all vertices)
     gl.uniform1f(program.uniforms.u_Time, context.time);
     gl.uniform1i(program.uniforms.u_Mode, 0);
-    gl.uniformMatrix4fv(program.uniforms.u_VM, true, context.mat4_VM);
+    gl.uniformMatrix4fv(program.uniforms.u_V, true, context.mat4_V);
     gl.uniformMatrix4fv(program.uniforms.u_P, true, context.mat4_P);
     gl.uniformMatrix4fv(program.uniforms.u_PVM, true, context.mat4_PVM);
     gl.uniformMatrix3fv(program.uniforms.u_N, true, context.mat3_N);
@@ -419,10 +429,10 @@ function renderGeometryTextureProgram(gl, program, geometry) {
 }
 
 function renderGeometryShadowProgram(gl, program, geometry) {
-
     let buf_gl_Position = geometry.buffers_gl.a_Position;
     let buf_gl_Normal = geometry.buffers_gl.a_Normal;
     let buf_gl_elements = geometry.elements_gl;
+    let buf_gl_TexCoord = geometry.buffers_gl.a_TexCoord;
 
     gl.useProgram(program.id); // .id contains the WebGL identifier
 
@@ -438,10 +448,73 @@ function renderGeometryShadowProgram(gl, program, geometry) {
     // set uniforms (uniforms are same for all vertices)
     gl.uniform1f(program.uniforms.u_Time, context.time);
     gl.uniform1i(program.uniforms.u_Mode, 0);
-    gl.uniformMatrix4fv(program.uniforms.u_VM, true, context.mat4_VM);
+    
+    const gc = geometry.color;
+    let { bcf } = gc;
+    if(!bcf){
+        bcf=[0.0,0.0,0.0];
+    }
+    gl.uniform4f(program.uniforms.u_baseColorFactor, bcf[0], bcf[1], bcf[2], 1.0);
+    if(gc.bct){
+
+        applyTexture(gl, gc.bct, 1, program.uniforms.u_baseColorTexture, program.uniforms.u_hasBaseColorTexture);
+        gl.enableVertexAttribArray(program.attributes.a_TexCoord);
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf_gl_TexCoord);
+        gl.vertexAttribPointer(program.attributes.a_TexCoord, 2, gl.FLOAT, false, 0, 0);
+    }
+
+    //bindBuffer(gl, program.uniforms.u_textCoord, geometry.texCoord);
+
     gl.uniformMatrix4fv(program.uniforms.u_P, true, context.mat4_P);
     gl.uniformMatrix4fv(program.uniforms.u_PVM, true, context.mat4_PVM);
     gl.uniformMatrix3fv(program.uniforms.u_N, true, context.mat3_N);
+    gl.uniformMatrix4fv(program.uniforms.u_V, true, context.mat4_V);
+
+    let g = geometry.transform;
+    const n = geometry.name;
+
+    if (n==='screen'){
+        const frequency = 5000; // Frequency in Hz
+        let val = .5 * Math.sin((Date.now().toFixed(4) / frequency) * 2 * Math.PI)+ 0.5;
+
+
+
+        const r = geometry.rotate.r;
+        const t = geometry.rotate.t;
+        let mat4 = m.mat4_new_identity();
+        let a = m.mat4_new_identity();
+        m.mat4_set_rot_iden(a, val);
+        mat4 = m.mat4_rotate(a, r);
+        mat4 = m.mat4_translate(a, t[0], t[1], t[2]);
+
+/*
+        let a = m.mat4_new_identity();
+        const r = geometry.rotate.r;
+        const t = geometry.rotate.t;
+
+        a = m.mat4_rotate(a, [r[0], r[1], geometry.rotate.r[2] * val, geometry.rotate.r[3] * val]);
+        a = m.mat4_translate(a, t[0], t[1], t[2]);*/
+
+    
+        /*
+        m.multiply(a, a, g);
+    
+        console.log(a);
+        console.log(g);
+    
+        console.log("\n\n------------------------------------------\n\n");*/
+        gl.uniformMatrix4fv(program.uniforms.u_M, false, a);
+    } else {
+        
+        gl.uniformMatrix4fv(program.uniforms.u_M, false, g);
+    }
+
+    //console.log(n);
+    //console.log(geometry.transform);
+    //console.log(g);
+
+
+
 
     // light parameters
     const spot0 = scene.lights.spot0;
@@ -450,6 +523,7 @@ function renderGeometryShadowProgram(gl, program, geometry) {
     gl.uniform4fv(program.uniforms['u_Lights[0].position_camera'], spot0.vec4_position_camera);
 
     // shadow mapping
+    
     gl.uniformMatrix4fv(program.uniforms['u_Shadowmaps[0].PVM'], true, spot0.shadowmap.mat4_PVM);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, spot0.shadowmap.texture);
@@ -466,25 +540,51 @@ function renderGeometryShadowProgram(gl, program, geometry) {
     gl.drawElements(geometry.primitives_type, geometry.elements_count, geometry.elements_type, 0);
 }
 
+function applyTexture(gl, tex, target, uf, euf){
+    if(tex){
+        gl.activeTexture(gl.TEXTURE0 + target);
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.uniform1i(uf, target);
+    }
+    if (euf !== undefined){
+        gl.uniform1i(euf, tex ? 1 : 0);
+    }
+}
+/*
+function bindBuffer(gl, pos, buff) {
+    if(buff === null){
+        return;
+    }
+
+    gl.enableVertexAttribArray(pos);
+    gl.bindBuffer(gl.ARRAY_BUFFER, buff.buffer);
+    gl.vertexAttribPointer(pos, buff.size, buff.type, false, 0, 0);
+    return buff;
+}*/
+
 function render_pass_shadows_geometry(program) {
     let ctx = context;
     let gl = context.gl;
     
     // loop over geometry
-    for (const [name, geometry] of Object.entries(scene.geometries)) {
+    const gs = Object.entries(scene.geometries);
+    for (const [name, geometry] of gs) {
+
+        geometry.geometries.forEach(g=>{
+            if (!g.hasElements())
+                return;
+    
+            // setup attribute pointers (attributes are different for each vertex)
+            gl.bindBuffer(gl.ARRAY_BUFFER, g.buffers_gl.a_Position);
+            gl.vertexAttribPointer(program.attributes.a_Position, 3, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(program.attributes.a_Position);
+    
+            // bind element buffer and draw elements
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.elements_gl);
+            gl.drawElements(g.primitives_type, g.elements_count, g.elements_type, 0);
+        });
 
         // render only indexed-buffer geometry
-        if (!geometry.hasElements())
-            continue;
-
-        // setup attribute pointers (attributes are different for each vertex)
-        gl.bindBuffer(gl.ARRAY_BUFFER, geometry.buffers_gl.a_Position);
-        gl.vertexAttribPointer(program.attributes.a_Position, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(program.attributes.a_Position);
-
-        // bind element buffer and draw elements
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.elements_gl);
-        gl.drawElements(geometry.primitives_type, geometry.elements_count, geometry.elements_type, 0);
     }
 }
 
@@ -509,7 +609,7 @@ function render_pass_shadows() {
 
         // set up program to create shadow map
         gl.useProgram(program.id);
-        gl.uniformMatrix4fv(program.uniforms.u_VM, true, light.shadowmap.mat4_VM);
+        gl.uniformMatrix4fv(program.uniforms.u_V, true, light.shadowmap.mat4_V);
         gl.uniformMatrix4fv(program.uniforms.u_PVM, true, light.shadowmap.mat4_PVM);
 
         // render geometry
@@ -528,20 +628,21 @@ function render_pass_final() {
     // reset framebuffer
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.clearColor(0.95, 0.95, 1.0, 1.0);
+    gl.clearColor(0.1, 0.1, .1, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    for (const [name, geometry] of Object.entries(scene.geometries)) {
-
-        if (!geometry.hasProgram())
-            continue;
-
-        let program = geometry.getProgram();
-        if (program.canRenderGeometry()) {
-            // here: pick render function based on shader program
-            program.renderGeometry(gl, geometry);
-            continue;
-        }
+    const sg = Object.entries(scene.geometries);
+    for (const [name, geometry] of sg) {
+        geometry.geometries.forEach(g=>{
+            if (!g.hasProgram())
+                return;
+    
+            let program = g.getProgram();
+            if (program.canRenderGeometry()) {
+                program.renderGeometry(gl, g);
+                return;
+            }
+        });
     }
 }
 
@@ -577,3 +678,11 @@ async function main() {
 // make main function available globally
 window.main = main;
 
+    
+const setSize = (gl, canvas) => {
+    const devicePixelRatio = window.devicePixelRatio || 1;
+
+    canvas.width = window.innerWidth * devicePixelRatio;
+    canvas.height = window.innerHeight * devicePixelRatio;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+}

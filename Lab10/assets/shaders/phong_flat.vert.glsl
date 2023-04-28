@@ -8,7 +8,8 @@
 attribute vec3 a_Position;  // vertex position
 attribute vec3 a_Normal;    // vertex normal
 
-uniform mat4 u_VM;          // model-view matrix
+uniform mat4 u_V;          // model-view matrix
+uniform mat4 u_M;           //model matrix
 uniform mat4 u_P;           // projection matrix
 uniform mat4 u_PVM;         // model-view-projection matrix
 uniform mat3 u_N;           // normal matrix: inverse transpose of 3x3 affine part
@@ -52,13 +53,13 @@ void main() {
 
     // transform vertex
     vec4 point_model = vec4(a_Position.xyz, 1.0);               // homogenize point coordinates
-    vec4 point_camera = u_VM * point_model;                     // vertex in camera frame
+    vec4 point_camera = u_V * point_model;                     // vertex in camera frame
     vec4 point_screen = u_P * point_camera;                     // vertex in normalized camera space
     gl_Position = point_screen;
 
     // lighting calculations
     vec3 normal = normalize(u_N * a_Normal);                    // normal vector
-    vec4 light_camera = u_VM * light_world;                     // light position
+    vec4 light_camera = u_V * light_world;                     // light position
     vec3 light = normalize(                                     // light vector
     light_camera.xyz - point_camera.xyz
     );

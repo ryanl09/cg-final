@@ -3,7 +3,7 @@ import { Light, LightType, Shadowmap } from "gl_light"
 import { Geometry } from "gl_geometry";
 import { createGeometryQuad, createGeometryPlane } from "geometries/basic";
 import { createGeometryGrid } from "geometries/grid";
-import { loadGLTF, createGeometryGLTF } from "gl_gltf";
+import { loadGLTF, createGeometryGLTF, loadNodes, loadMaterial, loadRotation } from "gl_gltf";
 
 
 class Scene {
@@ -59,34 +59,64 @@ export default async function createIlluminationScene(gl) {
     let plane = createGeometryPlane(gl);
     let quad = createGeometryQuad(gl);
 
+
     // load geometries
-    let gltf = await loadGLTF("assets/objects/laptop.gltf");
-    let laptop = await createGeometryGLTF(gl, gltf, 1);
-    let laptop2 = await createGeometryGLTF(gl, gltf, 2);
-    let laptop3 = await createGeometryGLTF(gl, gltf, 3);
-    let laptop4 = await createGeometryGLTF(gl, gltf, 4);
+    let gltf = await loadGLTF("assets/objects/laptopfrog.gltf");
+    let laptopBase = await createGeometryGLTF(gl, gltf, 0);
+    let baseTransform = loadNodes(gltf, 0);
+
+    let laptopScreen = await createGeometryGLTF(gl, gltf, 1);
+    let screenTransform = loadNodes(gltf, 1);
+
+    let screenRotate = loadRotation(gltf, 1);
+    
+    const mats = gltf.materials;
+
+    const mapped = mats.map(e => e.name);
+    const baseIndex = mapped.indexOf("LaptopBody");
+    const screenIndex = mapped.indexOf("LaptopScreen");
+
+    let baseColor = await loadMaterial(mats[baseIndex],gl);
+    let screenColor = await loadMaterial(mats[screenIndex], gl);
 
     // set programs
     grid.setProgram(program_simple);
     plane.setProgram(program_shadow);
-    laptop.forEach(e => e.setProgram(program_shadow));
-    laptop2.forEach(e => e.setProgram(program_shadow));
-    laptop3.forEach(e => e.setProgram(program_shadow));
-    laptop4.forEach(e => e.setProgram(program_shadow));
+    laptopBase.forEach(e => {
+        e.setProgram(program_shadow)
+        e['transform'] = baseTransform;
+        e['name'] = 'base';
+        e['color'] = baseColor;
+    });
+    laptopScreen.forEach(e => {
+        e.setProgram(program_shadow)
+        e['transform'] = screenTransform;
+        e['color'] = screenColor;
+        e['name'] = 'screen';
+        e['rotate'] = screenRotate;
+    });
     quad.setProgram(program_texture);
+
 
     // add objects to scene
     scene.geometries = {
-        grid: grid,
-        la0: laptop[0],
-        la1: laptop[1],
-        la2: laptop[2],
-        la3: laptop[3],
-        lb0: laptop2[0],
-        lb1: laptop2[1]
+        grid: {
+            name:'grid',
+            geometries:[grid],
+            transform:{}
+        },
+        base: {
+            name: 'base',
+            geometries: laptopBase,
+            transform: baseTransform
+        },
+        screen: {
+            name:'screen',
+            geometries:laptopScreen,
+            transform:screenTransform
+        }
     };
 
-    // create lights
     let spot0 = new Light(LightType.LIGHT_SPOT);
     // spot0.setShadowmap(new Shadowmap(256, 256));
     spot0.setShadowmap(new Shadowmap(1024, 1024));
@@ -95,10 +125,6 @@ export default async function createIlluminationScene(gl) {
     scene.lights = {
         spot0: spot0,
     };
-
-    console.log("[info] scene 'Illumination' constructed");
-
-
 
     return scene;
 }

@@ -8,7 +8,8 @@
 
 in vec3 a_Position;  // vertex position
 
-uniform mat4 u_VM;   // model-view matrix
+uniform mat4 u_V;   // model-view matrix
+uniform mat4 u_M;     //model
 uniform mat4 u_PVM;  // model-view-projection matrix
 
 smooth out vec4 smooth_color;
@@ -17,7 +18,7 @@ smooth out vec3 smooth_position;
 
 void main() {
 
-    vec4 position_light = u_VM * vec4(a_Position, 1.0);
+    vec4 position_light = u_V * vec4(a_Position, 1.0);
     vec4 position_clip = u_PVM * vec4(a_Position, 1.0);
 
     smooth_position = position_light.xyz;
