@@ -31,16 +31,25 @@
       *{
         box-sizing:border-box;
       }
-      .button-container {
+
+      body {
+        background-color:rgb(25,25,25);
+      }
+
+      .controls {
         position:fixed;
-        bottom:0;
-        width:100%;
+        top:0;
         left:0;
+        padding:16px;
+      }
+
+      .button-container {
         padding:40px;
         display:flex;
         justify-content:center;
-        align-items:center;
         gap:10px;
+        flex-direction: column;
+        border:1px solid #454545;
       }
 
       button {
@@ -58,6 +67,19 @@
         background-color:#373737;
         cursor:pointer;
       }
+      .s-title{
+        font-size: 20px;
+        color:white;
+      }
+      .mb-20{
+        margin-bottom:20px;
+      }
+      .ig {
+        display:flex;
+        align-items:center;
+        gap:8px;
+        color:white;
+      }
     </style>
 
   </head>
@@ -65,9 +87,28 @@
     <canvas class="webgl" id="canvas_gl"> </canvas>
 
 
-    <div class="button-container">
-      <button id="a-oc">Open / Close</button>
-      <button id="a-d">Detach</button>
+    <div class="controls">
+      <span class="s-title">Animation</span>
+      <div class="button-container mb-20">
+        <button id="a-none">None</button>
+        <button id="a-oc">Open / Close</button>
+        <button id="a-d">Detach</button>
+      </div>
+      <span class="s-title">Visibility</span>
+      <div class="button-container">
+        <div class="ig">
+          <input type="checkbox" id="v-g" checked />
+          <span>Grid</span>
+        </div>
+        <div class="ig">
+          <input type="checkbox" id="v-s" checked />
+          <span>Screen</span>
+        </div>
+        <div class="ig">
+          <input type="checkbox" id="v-b" checked />
+          <span>Base</span>
+        </div>
+      </div>
     </div>
   </body>
 </html>

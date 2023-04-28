@@ -4,13 +4,45 @@ import { default as createIlluminationScene } from "scene_illumination";
 let context = { };
 let scene = { };
 
-let animation = 0;
+var animationId = 0;
+var reset=false;
 
+var vis = {
+    grid:true,
+    screen:true,
+    base:true
+}
 
 
 window.addEventListener('load', function(){
+    const b0 = document.getElementById('a-none');
     const b1 = document.getElementById('a-oc');
     const b2 = document.getElementById('a-d');
+    b0.addEventListener('click', function(){
+        animationId=0;
+    });
+    b1.addEventListener('click', function(){
+        animationId=1;
+    });
+    b2.addEventListener('click', function(){
+        animationId=2;
+    });
+
+
+    const vg = document.getElementById('v-g');
+    const vs = document.getElementById('v-s');
+    const vb = document.getElementById('v-b');
+
+    vg.addEventListener('change', function(){
+        vis.grid = vg.checked;
+    });
+    vs.addEventListener('change', function(){
+        vis.screen = vs.checked;
+    });
+    vb.addEventListener('change', function(){
+        vis.base=  vb.checked;
+    });
+
 });
 
 function initRender3D(context) {
@@ -373,7 +405,10 @@ function update(context, timestamp) {
 }
 
 
-function renderGeometrySimpleProgram(gl, program, geometry, name) {
+function renderGeometrySimpleProgram(gl, program, geometry) {
+    if(!vis.grid){
+        return;
+    }
     let buf_gl = geometry.buffers_gl["a_Position"];
     let buf = geometry.buffers["a_Position"];
     gl.useProgram(program.id);
@@ -473,28 +508,35 @@ function renderGeometryShadowProgram(gl, program, geometry) {
     let g = geometry.transform;
     const n = geometry.name;
 
+    if(!vis[n]){
+        return;
+    }
+
     if (n==='screen'){
         const frequency = 5000; // Frequency in Hz
         let val = .5 * Math.sin((Date.now().toFixed(4) / frequency) * 2 * Math.PI)+ 0.5;
 
 
-
         const r = geometry.rotate.r;
         const t = geometry.rotate.t;
-        let mat4 = m.mat4_new_identity();
         let a = m.mat4_new_identity();
-        m.mat4_set_rot_iden(a, val);
-        mat4 = m.mat4_rotate(a, r);
-        mat4 = m.mat4_translate(a, t[0], t[1], t[2]);
 
-/*
-        let a = m.mat4_new_identity();
-        const r = geometry.rotate.r;
-        const t = geometry.rotate.t;
-
-        a = m.mat4_rotate(a, [r[0], r[1], geometry.rotate.r[2] * val, geometry.rotate.r[3] * val]);
-        a = m.mat4_translate(a, t[0], t[1], t[2]);*/
-
+        switch(animationId){
+            case 0:
+                a = g;
+                break;
+            case 1:
+                a = m.mat4_rotate(a, [r[0], r[1], geometry.rotate.r[2] * val, geometry.rotate.r[3] * val]);
+                a = m.mat4_translate(a, t[0], t[1], t[2]);        
+                break;
+            case 2:
+                let mat4 = m.mat4_new_identity();
+                m.mat4_set_rot_iden(a, val);
+                mat4 = m.mat4_rotate(a, r);
+                mat4 = m.mat4_translate(a, t[0], t[1], t[2]);
+                break;
+        }
+        
     
         /*
         m.multiply(a, a, g);
