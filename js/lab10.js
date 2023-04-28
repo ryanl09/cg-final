@@ -13,6 +13,12 @@ var vis = {
     base:true
 }
 
+var grid = {
+    r:.3,
+    g:.3,
+    b:.3
+}
+
 
 window.addEventListener('load', function(){
     const b0 = document.getElementById('a-none');
@@ -41,6 +47,33 @@ window.addEventListener('load', function(){
     });
     vb.addEventListener('change', function(){
         vis.base=  vb.checked;
+    });
+
+    
+    const rangeInput = document.querySelector('.js-range-input');
+    const output = document.querySelector('.js-range-output');
+    const root = document.documentElement;
+
+    function setHue() {
+        output.value = rangeInput.value + '°';
+        const [r,g,b] = hueToRgb(rangeInput.value);
+        root.style.setProperty('--hue', rangeInput.value);
+        grid.r=r;
+        grid.g=g;
+        grid.b=b;
+    }
+
+    function setDefaultState() {
+        rangeInput.focus();
+        setHue();
+    }
+
+    rangeInput.addEventListener('input', function(){
+        setHue();
+    });
+
+    document.addEventListener('DOMContentLoaded', function(){
+        setDefaultState();
     });
 
 });
@@ -404,17 +437,43 @@ function update(context, timestamp) {
     m.mat4_mul_mat4(spot0.shadowmap.mat4_PVM, spot0.shadowmap.mat4_P, spot0.shadowmap.mat4_V);
 }
 
-
+function hueToRgb(h) {
+    // Convert hue to degrees and scale to [0, 6]
+    var scaledHue = h / 60;
+    // Find the largest integer less than or equal to the scaled hue
+    var i = Math.floor(scaledHue);
+    // Calculate the fractional part between 0 and 1
+    var f = scaledHue - i;
+    // Calculate the RGB values based on the hue
+    var p = 0;
+    var q = 1 - f;
+    var t = f;
+    if (i % 6 == 0) {
+      return [1, t, p];
+    } else if (i % 6 == 1) {
+      return [q, 1, p];
+    } else if (i % 6 == 2) {
+      return [p, 1, t];
+    } else if (i % 6 == 3) {
+      return [p, q, 1];
+    } else if (i % 6 == 4) {
+      return [t, p, 1];
+    } else {
+      return [1, p, q];
+    }
+}
+  
 function renderGeometrySimpleProgram(gl, program, geometry) {
     if(!vis.grid){
         return;
     }
+
     let buf_gl = geometry.buffers_gl["a_Position"];
     let buf = geometry.buffers["a_Position"];
     gl.useProgram(program.id);
     gl.bindBuffer(gl.ARRAY_BUFFER, buf_gl);
     gl.vertexAttribPointer(program.attributes.a_Position, 3, gl.FLOAT, false, 0 , 0);
-    gl.uniform3f(program.uniforms.u_Color, 0.3, 0.3, 0.3);
+    gl.uniform3f(program.uniforms.u_Color, grid.r,grid.g,grid.b);
     gl.uniformMatrix4fv(program.uniforms.u_PVM, true, context.mat4_PVM);
     gl.drawArrays(geometry.primitives_type, 0, geometry.elements_count);
 }

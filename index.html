@@ -3,7 +3,10 @@
   <head>
     <meta charset="utf-8">
     <title> WebGL - Lab10 </title>
-    <link href="css/labs.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="css/main.css" rel="stylesheet">
 
     <script type="text/javascript">
     </script>
@@ -27,61 +30,6 @@
     <script defer src="../lib/cuon-utils.js"> </script>
     <script defer type="module" src="js/lab10.js"> </script>
 
-    <style>
-      *{
-        box-sizing:border-box;
-      }
-
-      body {
-        background-color:rgb(25,25,25);
-      }
-
-      .controls {
-        position:fixed;
-        top:0;
-        left:0;
-        padding:16px;
-      }
-
-      .button-container {
-        padding:40px;
-        display:flex;
-        justify-content:center;
-        gap:10px;
-        flex-direction: column;
-        border:1px solid #454545;
-      }
-
-      button {
-        border:none;
-        outline:none;
-        color:white;
-        background-color:#454545;
-        padding: 8px 40px;
-        transition:.23s all ease;
-        font-weight:500;
-        font-size:16px;
-      }
-
-      button:hover{
-        background-color:#373737;
-        cursor:pointer;
-      }
-      .s-title{
-        font-size: 20px;
-        color:white;
-      }
-      .mb-20{
-        margin-bottom:20px;
-      }
-      .ig {
-        display:flex;
-        align-items:center;
-        gap:8px;
-        color:white;
-      }
-    </style>
-
   </head>
   <body onload="main()">
     <canvas class="webgl" id="canvas_gl"> </canvas>
@@ -95,7 +43,7 @@
         <button id="a-d">Detach</button>
       </div>
       <span class="s-title">Visibility</span>
-      <div class="button-container">
+      <div class="button-container mb-20">
         <div class="ig">
           <input type="checkbox" id="v-g" checked />
           <span>Grid</span>
@@ -107,6 +55,15 @@
         <div class="ig">
           <input type="checkbox" id="v-b" checked />
           <span>Base</span>
+        </div>
+      </div>
+      <span class="s-title">Grid Hue</span>
+      <div class="button-container">
+        <div class="c-range">  
+          <div class="c-range__holder">    
+            <input class="c-range__slider js-range-input" id="hue" type="range" value="50" max="360">
+            <output class="c-range__output js-range-output" for="hue"></output>
+          </div>
         </div>
       </div>
     </div>

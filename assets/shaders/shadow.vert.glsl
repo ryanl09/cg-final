@@ -58,7 +58,7 @@ void main() {
     smooth_normal = normal;                                     // interpolate normals in fragment shader
 
     smooth_point_world = a_Position.xyz;
-    v_texCoord = a_TexCoord;
+    v_texCoord = fract(a_TexCoord * 1.0 );
 
 
 }
